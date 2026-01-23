@@ -1,0 +1,504 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Medications - NASA Medical Inventory{% endblock %}
+
+{% block extra_style %}
+<style>
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .add-section {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(252, 61, 33, 0.3);
+    }
+
+    .add-section h2 {
+        color: #FC3D21;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    label {
+        margin-bottom: 8px;
+        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        font-size: 1rem;
+    }
+
+    textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    input[type="file"] {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: white;
+        cursor: pointer;
+    }
+
+    .file-preview {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .file-preview img {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: 8px;
+        border: 2px solid rgba(252, 61, 33, 0.5);
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 8px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #FC3D21;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #d93419;
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .medication-list {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 12px;
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .medication-list h2 {
+        color: #FC3D21;
+        margin-bottom: 20px;
+    }
+
+    .medication-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 20px;
+    }
+
+    .medication-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s;
+    }
+
+    .medication-card:hover {
+        border-color: rgba(252, 61, 33, 0.5);
+        transform: translateY(-2px);
+    }
+
+    .medication-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 8px;
+        margin: 0 auto 15px;
+        display: block;
+        object-fit: cover;
+        border: 2px solid rgba(252, 61, 33, 0.5);
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .medication-info {
+        text-align: center;
+    }
+
+    .medication-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .medication-type {
+        color: #FFC107;
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+
+    .medication-details {
+        text-align: left;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.9rem;
+        margin: 15px 0;
+        line-height: 1.6;
+    }
+
+    .stock-status {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 5px;
+        font-size: 0.85rem;
+        font-weight: bold;
+        margin: 10px 0;
+    }
+
+    .stock-good {
+        background: #4CAF50;
+    }
+
+    .stock-low {
+        background: #FFC107;
+        color: #000;
+    }
+
+    .stock-out {
+        background: #F44336;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .card-actions button {
+        flex: 1;
+        padding: 8px;
+        font-size: 0.9rem;
+    }
+
+    .alert {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .alert.show {
+        display: block;
+    }
+
+    .alert.success {
+        background: rgba(76, 175, 80, 0.2);
+        border: 1px solid #4CAF50;
+        color: #4CAF50;
+    }
+
+    .alert.error {
+        background: rgba(244, 67, 54, 0.2);
+        border: 1px solid #F44336;
+        color: #F44336;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>💊 Manage Medications</h1>
+        <p style="color: rgba(255, 255, 255, 0.6);">Add medications and upload reference images</p>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <div class="add-section">
+        <h2>Add New Medication</h2>
+        <form id="medicationForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="name">Medication Name *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="generic_name">Generic Name</label>
+                    <input type="text" id="generic_name" name="generic_name">
+                </div>
+
+                <div class="form-group">
+                    <label for="medication_type">Type *</label>
+                    <select id="medication_type" name="medication_type" required>
+                        <option value="">Select type...</option>
+                        <option value="ANALGESIC">Pain Relief</option>
+                        <option value="ANTIBIOTIC">Antibiotic</option>
+                        <option value="ANTINAUSEA">Anti-Nausea</option>
+                        <option value="SLEEP_AID">Sleep Aid</option>
+                        <option value="ALLERGY">Allergy</option>
+                        <option value="STIMULANT">Stimulant</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="dosage">Dosage *</label>
+                    <input type="text" id="dosage" name="dosage" placeholder="e.g., 200mg" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="current_quantity">Current Quantity *</label>
+                    <input type="number" id="current_quantity" name="current_quantity" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="minimum_quantity">Minimum Quantity *</label>
+                    <input type="number" id="minimum_quantity" name="minimum_quantity" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="container_location">Container Location *</label>
+                    <input type="text" id="container_location" name="container_location" placeholder="e.g., A1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="expiration_date">Expiration Date</label>
+                    <input type="date" id="expiration_date" name="expiration_date">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" placeholder="Usage instructions, side effects, etc."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="pill_image">Pill/Medication Image</label>
+                <input type="file" id="pill_image" name="pill_image" accept="image/*">
+                <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-top: 5px;">
+                    📸 Clear photo of the pill/medication for reference and recognition
+                </p>
+                <div id="imagePreview" class="file-preview"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">➕ Add Medication</button>
+        </form>
+    </div>
+
+    <div class="medication-list">
+        <h2>All Medications</h2>
+        <div class="medication-grid" id="medicationGrid">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // Preview image before upload
+    document.getElementById('pill_image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.getElementById('imagePreview');
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Submit form
+    document.getElementById('medicationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        
+        try {
+            const response = await fetch('/api/medications/add/', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showAlert('✓ Medication added successfully!', 'success');
+                this.reset();
+                document.getElementById('imagePreview').innerHTML = '';
+                loadMedications();
+            } else {
+                showAlert('✗ Error: ' + (data.message || 'Failed to add medication'), 'error');
+            }
+        } catch (error) {
+            showAlert('✗ Connection error: ' + error.message, 'error');
+        }
+    });
+
+    // Load medications
+    async function loadMedications() {
+        try {
+            const response = await fetch('/api/medications/list/');
+            const data = await response.json();
+
+            const grid = document.getElementById('medicationGrid');
+            
+            if (data.medications && data.medications.length > 0) {
+                grid.innerHTML = data.medications.map(med => {
+                    let stockClass = 'stock-good';
+                    let stockText = 'In Stock';
+                    if (med.current_quantity <= 0) {
+                        stockClass = 'stock-out';
+                        stockText = 'Out of Stock';
+                    } else if (med.current_quantity <= med.minimum_quantity) {
+                        stockClass = 'stock-low';
+                        stockText = 'Low Stock';
+                    }
+
+                    return `
+                        <div class="medication-card">
+                            <img src="${med.image_url || '/static/default-pill.png'}" 
+                                 alt="${med.name}" 
+                                 class="medication-photo"
+                                 onerror="this.src='/static/default-pill.png'">
+                            <div class="medication-info">
+                                <div class="medication-name">${med.name}</div>
+                                <div class="medication-type">${med.medication_type}</div>
+                                <div class="medication-details">
+                                    <div><strong>Dosage:</strong> ${med.dosage}</div>
+                                    <div><strong>Stock:</strong> ${med.current_quantity} units</div>
+                                    <div><strong>Location:</strong> ${med.container_location}</div>
+                                    ${med.expiration_date ? `<div><strong>Expires:</strong> ${med.expiration_date}</div>` : ''}
+                                </div>
+                                <span class="stock-status ${stockClass}">${stockText}</span>
+                                <div class="card-actions">
+                                    <button class="btn btn-secondary" onclick="updateImage(${med.id})">Update Image</button>
+                                    <button class="btn btn-secondary" onclick="editMedication(${med.id})">Edit</button>
+                                    <button class="btn btn-secondary" onclick="deleteMedication(${med.id})">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                grid.innerHTML = '<p style="color: rgba(255, 255, 255, 0.5); text-align: center;">No medications added yet.</p>';
+            }
+        } catch (error) {
+            console.error('Error loading medications:', error);
+        }
+    }
+
+    function updateImage(medicationId) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('medication_id', medicationId);
+
+            try {
+                const response = await fetch('/api/medications/update-image/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('✓ Image updated successfully!', 'success');
+                    loadMedications();
+                } else {
+                    showAlert('✗ Error: ' + (data.message || 'Failed to update image'), 'error');
+                }
+            } catch (error) {
+                showAlert('✗ Connection error: ' + error.message, 'error');
+            }
+        };
+        input.click();
+    }
+
+    function editMedication(medicationId) {
+        window.location.href = `/inventory/${medicationId}/`;
+    }
+
+    async function deleteMedication(medicationId) {
+        if (!confirm('Are you sure you want to delete this medication?')) return;
+
+        try {
+            const response = await fetch(`/api/medications/delete/${medicationId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showAlert('✓ Medication deleted successfully', 'success');
+                loadMedications();
+            } else {
+                showAlert('✗ Error: ' + (data.message || 'Failed to delete'), 'error');
+            }
+        } catch (error) {
+            showAlert('✗ Connection error: ' + error.message, 'error');
+        }
+    }
+
+    function showAlert(message, type) {
+        const alert = document.getElementById('alertBox');
+        alert.textContent = message;
+        alert.className = `alert ${type} show`;
+        
+        setTimeout(() => {
+            alert.classList.remove('show');
+        }, 5000);
+    }
+
+    // Load medications on page load
+    loadMedications();
+</script>
+{% endblock %}

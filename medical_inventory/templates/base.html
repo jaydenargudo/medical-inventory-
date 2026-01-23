@@ -152,6 +152,8 @@
                 <li><a href="{% url 'medical_inventory:lockscreen' %}" {% if 'lockscreen' in request.path %}class="active"{% endif %}>Access System</a></li>
                 <li><a href="{% url 'medical_inventory:inventory_dashboard' %}" {% if 'inventory' in request.path %}class="active"{% endif %}>Inventory</a></li>
                 <li><a href="{% url 'medical_inventory:pill_recognition' %}" {% if 'pill-recognition' in request.path %}class="active"{% endif %}>Pill Recognition</a></li>
+                <li><a href="{% url 'medical_inventory:manage_astronauts' %}" {% if 'manage/astronauts' in request.path %}class="active"{% endif %}>Astronauts</a></li>
+                <li><a href="{% url 'medical_inventory:manage_medications' %}" {% if 'manage/medications' in request.path %}class="active"{% endif %}>Medications</a></li>
                 <li><a href="/admin/" target="_blank">Admin</a></li>
             </ul>
         </div>
