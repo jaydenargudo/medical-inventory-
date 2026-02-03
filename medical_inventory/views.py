@@ -1,4 +1,5 @@
 # views.py - Single capture facial recognition (no streaming)
+from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -12,9 +13,11 @@ import requests
 import json
 from datetime import timedelta
 from .models import Astronaut, Medication, Prescription, MedicationCheckout, InventoryLog, SystemLog
+from .forms import MedicationForm
+
 
 # Configuration
-ESP32_IP = "192.168.1.100"
+ESP32_IP = ""
 
 
 def home(request):
@@ -544,3 +547,32 @@ def manage_astronauts(request):
 def manage_medications(request):
     """Medication management page"""
     return render(request, 'manage_medications.html')
+
+def inventory_dashboard(request):
+    # Your existing view code
+    medications = Medication.objects.all()
+    total_medications = medications.count()
+    low_stock_count = medications.filter(current_quantity__lte=10).count()
+    # ... other context variables
+    
+    context = {
+        'medications': medications,
+        'total_medications': total_medications,
+        'low_stock_count': low_stock_count,
+        # ... other context
+    }
+    return render(request, 'inventory_dashboard.html', context)
+
+def add_medication(request):
+    if request.method == 'POST':
+        form = MedicationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Medication added successfully!')
+            return redirect('medical_inventory:inventory_dashboard')  # Adjust to your URL name
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = MedicationForm()
+    
+    return render(request, 'add_medication.html', {'form': form})
