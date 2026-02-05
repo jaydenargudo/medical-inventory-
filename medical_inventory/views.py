@@ -1,12 +1,6 @@
-<<<<<<< HEAD
 # views.py - Single capture facial recognition (no streaming)
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-=======
-# views.py - Complete pill recognition implementation
-
-from django.shortcuts import render, get_object_or_404
->>>>>>> 96694b898cbf97e57f11858eafeb0c016c7b690b
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.storage import default_storage
@@ -28,7 +22,6 @@ except ImportError:
 # Import for color/shape analysis
 from sklearn.cluster import KMeans
 import pickle
-<<<<<<< HEAD
 import requests
 import json
 from datetime import timedelta
@@ -38,9 +31,6 @@ from .forms import MedicationForm
 
 # Configuration
 ESP32_IP = ""
-=======
-
->>>>>>> 96694b898cbf97e57f11858eafeb0c016c7b690b
 
 # ============================================================================
 # APPROACH 1: Deep Learning CNN Model (Most Accurate)
@@ -547,7 +537,6 @@ def recognize_pill(request):
                 'message': f'Error processing image: {str(e)}'
             })
     
-<<<<<<< HEAD
     return JsonResponse({'error': 'No image provided'}, status=400)
 
 
@@ -842,6 +831,3 @@ def add_medication(request):
         form = MedicationForm()
     
     return render(request, 'add_medication.html', {'form': form})
-=======
-    return JsonResponse({'error': 'No image provided'}, status=400)
->>>>>>> 96694b898cbf97e57f11858eafeb0c016c7b690b
