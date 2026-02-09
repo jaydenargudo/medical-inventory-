@@ -14,11 +14,6 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-temporary-key')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-# Make sure these directories exist
-os.makedirs(os.path.join(MEDIA_ROOT, 'astronaut_photos'), exist_ok=True)
-os.makedirs(os.path.join(MEDIA_ROOT, 'pill_images'), exist_ok=True)
-os.makedirs(os.path.join(MEDIA_ROOT, 'temp'), exist_ok=True)
-
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -141,3 +136,8 @@ LOGGING = {
         },
     },
 }
+
+# Make sure these directories exist
+os.makedirs(os.path.join(MEDIA_ROOT, 'astronaut_photos'), exist_ok=True)
+os.makedirs(os.path.join(MEDIA_ROOT, 'pill_images'), exist_ok=True)
+os.makedirs(os.path.join(MEDIA_ROOT, 'temp'), exist_ok=True)

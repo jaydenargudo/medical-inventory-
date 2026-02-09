@@ -5,6 +5,66 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/admin-pages.css' %}">
+<style>
+    .search-export-bar {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 12px 40px 12px 12px;
+        border-radius: 8px;
+        border: 2px solid rgba(252, 61, 33, 0.3);
+        background: rgba(0, 0, 0, 0.3);
+        color: white;
+        font-size: 16px;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #FC3D21;
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #FC3D21;
+    }
+    
+    .export-csv-btn {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .export-csv-btn:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -16,6 +76,21 @@
 
     <div id="alertBox" class="alert"></div>
 
+    <!-- Search and Export Bar -->
+    <div class="search-export-bar">
+        <div class="search-box">
+            <input type="text" 
+                   id="medicationSearch" 
+                   class="search-input" 
+                   placeholder="🔍 Search medications by name, type, or location..."
+                   autocomplete="off">
+            <span class="search-icon">🔍</span>
+        </div>
+        <button class="export-csv-btn" onclick="exportToCSV()">
+            Export to CSV
+        </button>
+    </div>
+
     <div class="add-section">
         <h2>Add New Medication</h2>
         <form id="medicationForm" enctype="multipart/form-data">
@@ -24,6 +99,29 @@
                 <div class="form-group">
                     <label for="name">Medication Name *</label>
                     <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="generic_name">Generic Name</label>
+                    <input type="text" id="generic_name" name="generic_name">
+                </div>
+
+                <div class="form-group">
+                    <label for="medication_type">Type</label>
+                    <select id="medication_type" name="medication_type">
+                        <option value="ANALGESIC">Pain Relief</option>
+                        <option value="ANTIBIOTIC">Antibiotic</option>
+                        <option value="ANTINAUSEA">Anti-Nausea</option>
+                        <option value="SLEEP_AID">Sleep Aid</option>
+                        <option value="ALLERGY">Allergy</option>
+                        <option value="STIMULANT">Stimulant</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="dosage">Dosage</label>
+                    <input type="text" id="dosage" name="dosage" placeholder="e.g., 500mg">
                 </div>
 
                 <div class="form-group">
@@ -37,12 +135,28 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="container_location">Container Location</label>
+                    <input type="text" id="container_location" name="container_location" placeholder="e.g., A1">
+                </div>
+
+                <div class="form-group">
                     <label for="expiration_date">Expiration Date</label>
                     <input type="date" id="expiration_date" name="expiration_date">
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-primary">Add Medication</button>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3" placeholder="Medication description and usage notes"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="pill_image">Pill Image (for recognition)</label>
+                <input type="file" id="pill_image" name="pill_image" accept="image/*">
+                <div id="imagePreview" class="file-preview"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">➕ Add Medication</button>
         </form>
     </div>
 
@@ -57,6 +171,93 @@
 
 {% block extra_script %}
 <script>
+    let allMedications = [];
+
+    // Search functionality
+    const searchInput = document.getElementById('medicationSearch');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        
+        searchTimeout = setTimeout(function() {
+            const query = searchInput.value.toLowerCase().trim();
+            filterMedications(query);
+        }, 300);
+    });
+
+    function filterMedications(query) {
+        const grid = document.getElementById('medicationGrid');
+        
+        if (!query) {
+            // Show all
+            renderMedications(allMedications);
+            return;
+        }
+        
+        const filtered = allMedications.filter(med => {
+            return med.name.toLowerCase().includes(query) ||
+                   (med.generic_name && med.generic_name.toLowerCase().includes(query)) ||
+                   med.medication_type.toLowerCase().includes(query) ||
+                   (med.container_location && med.container_location.toLowerCase().includes(query));
+        });
+        
+        renderMedications(filtered);
+    }
+
+    function renderMedications(medications) {
+        const grid = document.getElementById('medicationGrid');
+        
+        if (medications.length === 0) {
+            grid.innerHTML = '<p style="color: rgba(255, 255, 255, 0.5); text-align: center;">No medications found.</p>';
+            return;
+        }
+        
+        grid.innerHTML = medications.map(med => {
+            let stockClass = 'stock-good';
+            let stockText = 'Normal';
+            
+            if (med.status === 'OUT') {
+                stockClass = 'stock-out';
+                stockText = 'Out of Stock';
+            } else if (med.status === 'CRITICAL') {
+                stockClass = 'stock-out';
+                stockText = 'Critical';
+            } else if (med.status === 'LOW') {
+                stockClass = 'stock-low';
+                stockText = 'Low Stock';
+            }
+
+            return `
+                <div class="medication-card">
+                    ${med.pill_image ? `<img src="${med.pill_image}" class="medication-photo" onerror="this.style.display='none'">` : ''}
+                    <div class="medication-info">
+                        <div class="medication-name">${med.name}</div>
+                        ${med.generic_name ? `<div class="medication-type">${med.generic_name}</div>` : ''}
+                        <div class="medication-details">
+                            <div><strong>Type:</strong> ${med.medication_type_display || med.medication_type}</div>
+                            <div><strong>Dosage:</strong> ${med.dosage}</div>
+                            <div><strong>Stock:</strong> ${med.current_quantity} / ${med.minimum_quantity} units</div>
+                            <div><strong>Location:</strong> ${med.container_location}</div>
+                            ${med.expiration_date ? `<div><strong>Expires:</strong> ${med.expiration_date}</div>` : ''}
+                        </div>
+                        <span class="stock-status ${stockClass}">${stockText}</span>
+                        <div class="card-actions">
+                            <button class="btn btn-secondary" onclick="editMedication(${med.id})">Edit</button>
+                            <button class="btn btn-secondary" onclick="updateImage(${med.id})">Update Image</button>
+                            <button class="btn btn-secondary" onclick="deleteMedication(${med.id})">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // CSV Export
+    function exportToCSV() {
+        window.location.href = '{% url "medical_inventory:export_medications_csv" %}';
+    }
+
     // Preview image before upload
     document.getElementById('pill_image').addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -103,44 +304,9 @@
             const response = await fetch('/api/medications/list/');
             const data = await response.json();
 
-            const grid = document.getElementById('medicationGrid');
-            
-            if (data.medications && data.medications.length > 0) {
-                grid.innerHTML = data.medications.map(med => {
-                    let stockClass = 'stock-good';
-                    let stockText = 'Normal';
-                    
-                    if (med.status === 'OUT') {
-                        stockClass = 'stock-out';
-                        stockText = 'Out of Stock';
-                    } else if (med.status === 'CRITICAL') {
-                        stockClass = 'stock-out';
-                        stockText = 'Critical';
-                    } else if (med.status === 'LOW') {
-                        stockClass = 'stock-low';
-                        stockText = 'Low Stock';
-                    }
-
-                    return `
-                        <div class="medication-card">
-                            <div class="medication-info">
-                                <div class="medication-name">${med.name}</div>
-                                <div class="medication-details">
-                                    <div><strong>Stock:</strong> ${med.current_quantity} units</div>
-                                    <div><strong>Minimum:</strong> ${med.minimum_quantity} units</div>
-                                    ${med.expiration_date ? `<div><strong>Expires:</strong> ${med.expiration_date}</div>` : ''}
-                                </div>
-                                <span class="stock-status ${stockClass}">${stockText}</span>
-                                <div class="card-actions">
-                                    <button class="btn btn-secondary" onclick="editMedication(${med.id})">Edit</button>
-                                    <button class="btn btn-secondary" onclick="deleteMedication(${med.id})">Delete</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } else {
-                grid.innerHTML = '<p style="color: rgba(255, 255, 255, 0.5); text-align: center;">No medications added yet.</p>';
+            if (data.medications) {
+                allMedications = data.medications;
+                renderMedications(allMedications);
             }
         } catch (error) {
             console.error('Error loading medications:', error);

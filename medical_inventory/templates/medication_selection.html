@@ -5,6 +5,42 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'css/medication-selection.css' %}">
+<style>
+    .search-container {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 12px 40px 12px 12px;
+        font-size: 16px;
+        border: 2px solid rgba(252, 61, 33, 0.5);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        color: white;
+    }
+    
+    .search-input:focus {
+        outline: none;
+        border-color: #FC3D21;
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #FC3D21;
+        font-size: 20px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -16,11 +52,29 @@
 </div>
 
 <div class="container">
+    <!-- Search Bar -->
+    <div class="search-container">
+        <div class="search-box">
+            <input type="text" 
+                   id="medicationSearch" 
+                   class="search-input" 
+                   placeholder="🔍 Search medications by name, type, or description..."
+                   autocomplete="off">
+            <span class="search-icon">🔍</span>
+        </div>
+    </div>
+
     <div class="section">
         <h2>Your Prescribed Medications</h2>
-        <div class="medication-grid">
+        <div class="medication-grid" id="prescriptionGrid">
             {% for prescription in prescriptions %}
-            <div class="medication-card prescription" onclick="toggleMedication({{ prescription.medication.id }}, true)" data-med-id="{{ prescription.medication.id }}" data-is-prescription="true">
+            <div class="medication-card prescription" 
+                 onclick="toggleMedication({{ prescription.medication.id }}, true)" 
+                 data-med-id="{{ prescription.medication.id }}" 
+                 data-is-prescription="true"
+                 data-name="{{ prescription.medication.name|lower }}"
+                 data-type="{{ prescription.medication.get_medication_type_display|lower }}"
+                 data-description="{{ prescription.medication.description|lower }}">
                 <div class="prescription-badge">PRESCRIBED</div>
                 <div class="medication-name">{{ prescription.medication.name }}</div>
                 <div class="medication-details">
@@ -49,9 +103,15 @@
 
     <div class="section">
         <h2>Additional Available Medications</h2>
-        <div class="medication-grid">
+        <div class="medication-grid" id="additionalGrid">
             {% for medication in all_medications %}
-            <div class="medication-card" onclick="toggleMedication({{ medication.id }}, false)" data-med-id="{{ medication.id }}" data-is-prescription="false">
+            <div class="medication-card" 
+                 onclick="toggleMedication({{ medication.id }}, false)" 
+                 data-med-id="{{ medication.id }}" 
+                 data-is-prescription="false"
+                 data-name="{{ medication.name|lower }}"
+                 data-type="{{ medication.get_medication_type_display|lower }}"
+                 data-description="{{ medication.description|lower }}">
                 <div class="medication-name">{{ medication.name }}</div>
                 <div class="medication-details">
                     <div><strong>Type:</strong> {{ medication.get_medication_type_display }}</div>
@@ -81,7 +141,7 @@
             <p style="color: rgba(255, 255, 255, 0.5);">No medications selected</p>
         </div>
         <button class="checkout-button" id="checkoutBtn" onclick="checkout()" disabled>
-            Checkout & Unlock Container
+            🔓 Checkout & Unlock Container
         </button>
     </div>
 </div>
@@ -99,6 +159,44 @@
 <script>
     const selectedMedications = new Map();
     const astronautId = {{ astronaut.id }};
+
+    // Search functionality
+    const searchInput = document.getElementById('medicationSearch');
+    let searchTimeout;
+
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        
+        searchTimeout = setTimeout(function() {
+            const query = searchInput.value.toLowerCase().trim();
+            
+            // Filter both prescription and additional grids
+            filterMedicationCards('prescriptionGrid', query);
+            filterMedicationCards('additionalGrid', query);
+        }, 300); // Debounce 300ms
+    });
+
+    function filterMedicationCards(gridId, query) {
+        const grid = document.getElementById(gridId);
+        const cards = grid.querySelectorAll('.medication-card');
+        
+        cards.forEach(card => {
+            if (!query) {
+                card.style.display = '';
+                return;
+            }
+            
+            const name = card.getAttribute('data-name') || '';
+            const type = card.getAttribute('data-type') || '';
+            const description = card.getAttribute('data-description') || '';
+            
+            const matches = name.includes(query) || 
+                          type.includes(query) || 
+                          description.includes(query);
+            
+            card.style.display = matches ? '' : 'none';
+        });
+    }
 
     function toggleMedication(medId, isPrescription) {
         const card = document.querySelector(`[data-med-id="${medId}"]`);
@@ -194,22 +292,29 @@
             const data = await response.json();
 
             if (data.success) {
-                document.getElementById('modalTitle').textContent = '✓ Checkout Successful!';
+                let title = '✓ Checkout Successful!';
+                let message = `Container ${data.unlock_status ? 'unlocked successfully' : 'unlock failed - please contact support'}. ${data.checkouts} medication(s) dispensed.`;
+                
+                // Show warnings if any
+                if (data.warnings && data.warnings.length > 0) {
+                    message += '\n\n⚠️ WARNING: ' + data.warning_message;
+                    title += ' (With Warnings)';
+                }
+                
+                document.getElementById('modalTitle').textContent = title;
                 document.getElementById('modalSpinner').style.display = 'none';
-                document.getElementById('modalMessage').textContent = 
-                    `Container ${data.unlock_status ? 'unlocked successfully' : 'unlock failed - please contact support'}. ` +
-                    `${data.checkouts} medication(s) dispensed.`;
+                document.getElementById('modalMessage').textContent = message;
                 
                 setTimeout(() => {
                     window.location.href = '/';
-                }, 3000);
+                }, data.warnings && data.warnings.length > 0 ? 5000 : 3000);
             } else {
-                throw new Error('Checkout failed');
+                throw new Error(data.message || 'Checkout failed');
             }
         } catch (error) {
             document.getElementById('modalTitle').textContent = '✗ Error';
             document.getElementById('modalSpinner').style.display = 'none';
-            document.getElementById('modalMessage').textContent = 'An error occurred. Please try again.';
+            document.getElementById('modalMessage').textContent = error.message || 'An error occurred. Please try again.';
         }
     }
 </script>

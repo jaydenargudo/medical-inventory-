@@ -8,6 +8,8 @@ class Astronaut(models.Model):
     astronaut_id = models.CharField(max_length=50, unique=True)
     name = models.CharField(max_length=200)
     face_encoding = models.BinaryField(null=True, blank=True)  # Store face encoding
+    # Add this to your Astronaut model:
+    photo = models.ImageField(upload_to='astronaut_photos/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):

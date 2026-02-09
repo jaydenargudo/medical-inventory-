@@ -24,13 +24,6 @@ urlpatterns = [
     path('warnings/', views.warning_log_view, name='warning_log'),
     path('warnings/<int:warning_id>/acknowledge/', views.acknowledge_warning, name='acknowledge_warning'),
     
-    # NEW: Emergency Access
-    path('emergency/', views.emergency_access, name='emergency_access'),
-    
-    # NEW: QR Code
-    path('qr-code/', views.qr_code_page, name='qr_code_page'),
-    path('qr-code/generate/', views.generate_qr_code, name='generate_qr_code'),
-    
     # NEW: ESP32 Dashboard
     path('esp32/dashboard/', views.esp32_dashboard, name='esp32_dashboard'),
     

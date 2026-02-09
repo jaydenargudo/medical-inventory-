@@ -704,7 +704,7 @@ def warning_log_view(request):
         'critical': warnings.filter(severity='CRITICAL').count(),
     }
     
-    return render(request, 'medical_inventory/warning_log.html', {
+    return render(request, 'warning_log.html', {
         'warnings': warnings[:100],  # Limit to recent 100
         'stats': stats
     })
@@ -908,124 +908,9 @@ def capture_astronaut_photo(request):
     
     # GET request - show capture interface
     astronaut_id = request.GET.get('astronaut_id')
-    return render(request, 'medical_inventory/capture_photo.html', {
+    return render(request, 'capture_photo.html', {
         'astronaut_id': astronaut_id
     })
-
-
-# ============================================================================
-# EMERGENCY ACCESS
-# ============================================================================
-
-# Store emergency PIN hash in settings.py:
-# EMERGENCY_PIN_HASH = hashlib.sha256('your_emergency_pin'.encode()).hexdigest()
-
-@csrf_exempt
-def emergency_access(request):
-    """Handle emergency access with PIN"""
-    if request.method == 'POST':
-        pin = request.POST.get('emergency_pin')
-        name = request.POST.get('name', 'Unknown')
-        reason = request.POST.get('reason', '')
-        
-        if not pin:
-            return JsonResponse({'success': False, 'message': 'PIN required'}, status=400)
-        
-        # Hash the entered PIN
-        pin_hash = hashlib.sha256(pin.encode()).hexdigest()
-        
-        # Check against stored PIN (from settings)
-        correct_pin_hash = getattr(settings, 'EMERGENCY_PIN_HASH', None)
-        
-        if not correct_pin_hash:
-            # Default emergency PIN for development: "EMERGENCY123"
-            correct_pin_hash = hashlib.sha256('EMERGENCY123'.encode()).hexdigest()
-        
-        if pin_hash == correct_pin_hash:
-            try:
-                # Log emergency access
-                from .models import EmergencyAccess
-                EmergencyAccess.objects.create(
-                    pin_hash=pin_hash,
-                    accessed_by_name=name,
-                    reason=reason,
-                    ip_address=request.META.get('REMOTE_ADDR')
-                )
-            except:
-                pass
-            
-            # Send unlock signal to ESP32
-            unlock_success = send_esp32_unlock()
-            
-            SystemLog.objects.create(
-                event_type='CONTAINER_UNLOCK',
-                description=f"Emergency access granted to: {name}. Reason: {reason}",
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
-            
-            return JsonResponse({
-                'success': True,
-                'message': 'Emergency access granted',
-                'unlock_status': unlock_success
-            })
-        else:
-            SystemLog.objects.create(
-                event_type='AUTH_FAILURE',
-                description=f"Failed emergency access attempt by: {name}",
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
-            
-            return JsonResponse({
-                'success': False,
-                'message': 'Invalid PIN'
-            }, status=403)
-    
-    # GET request - show emergency access form
-    return render(request, 'medical_inventory/emergency_access.html')
-
-
-# ============================================================================
-# QR CODE GENERATION
-# ============================================================================
-
-def generate_qr_code(request):
-    """Generate QR code for the website"""
-    # Get the full URL of your site
-    site_url = request.build_absolute_uri('/')
-    
-    # Create QR code
-    qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
-        border=4,
-    )
-    qr.add_data(site_url)
-    qr.make(fit=True)
-    
-    # Create image
-    img = qr.make_image(fill_color="black", back_color="white")
-    
-    # Save to bytes buffer
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    buffer.seek(0)
-    
-    # Return as downloadable image
-    response = HttpResponse(buffer.getvalue(), content_type='image/png')
-    response['Content-Disposition'] = f'attachment; filename="nasa_medical_inventory_qr.png"'
-    
-    return response
-
-
-def qr_code_page(request):
-    """Display QR code page for presentations"""
-    site_url = request.build_absolute_uri('/')
-    
-    return render(request, 'medical_inventory/qr_code.html', {
-        'site_url': site_url
-    })
-
 
 # ============================================================================
 # ESP32 COMMUNICATION (WiFi Connection)
