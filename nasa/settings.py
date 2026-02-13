@@ -2,6 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 import hashlib
+import dj_database_url
 
 # Load environment variables
 load_dotenv()
