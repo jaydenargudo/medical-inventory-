@@ -72,7 +72,7 @@ platformdirs==4.3.7
 postgres==4.0
 postgrest==0.19.3
 propcache==0.3.0
-protobuf==6.33.5
+protobuf==4.25.3
 # psycopg2==2.9.10
 psycopg2-binary==2.9.10
 psycopg2-pool==1.2
