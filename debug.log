@@ -13986,3 +13986,4 @@ Not Found: /accounts/login/
 "GET /manage/medications/ HTTP/1.1" 200 15585
 "GET /api/medications/list/ HTTP/1.1" 200 493
 Watching for file changes with StatReloader
+"GET / HTTP/1.1" 200 2627
