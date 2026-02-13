@@ -1,0 +1,5 @@
+[phases.setup]
+nixPkgs = ['libX11', 'libXext', 'libSM', 'libICE', 'libGL']
+
+[phases.install]
+cmds = ['pip install --upgrade pip']
