@@ -57,7 +57,7 @@ MarkupSafe==3.0.2
 matplotlib==3.10.1
 mdurl==0.1.2
 mediapipe==0.10.14
-ml_dtypes==0.5.1
+ml_dtypes==0.4.1
 multidict==6.2.0
 mysql-connector-python==9.4.0
 namex==0.1.0
