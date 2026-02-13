@@ -103,7 +103,7 @@ storage3==0.11.3
 StrEnum==0.4.15
 supabase==2.14.0
 supafunc==0.9.3
-tensorboard==2.20.0
+tensorboard==2.17.0
 tensorboard-data-server==0.7.2
 tensorflow==2.17.0
 termcolor==3.3.0
