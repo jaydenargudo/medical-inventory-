@@ -13989,3 +13989,8 @@ Watching for file changes with StatReloader
 "GET / HTTP/1.1" 200 2627
 Watching for file changes with StatReloader
 Watching for file changes with StatReloader
+"GET / HTTP/1.1" 200 2627
+Not Found: /favicon.ico
+"GET /favicon.ico HTTP/1.1" 404 9824
+C:\Users\jayde\Downloads\medical-railway\medical_inventory\nasa\settings.py changed, reloading.
+Watching for file changes with StatReloader
