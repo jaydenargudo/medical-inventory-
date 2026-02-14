@@ -8,15 +8,13 @@ WORKDIR /app
 
 # Install system dependencies required for OpenCV / dlib / face_recognition
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    libx11-6 \
-    libgtk-3-0 \
+    libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    libgl1-mesa-glx \
+    libx11-6 \
+    libgtk-3-0 \
  && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python packages
